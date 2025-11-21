@@ -2,8 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Configuración APP / PWA -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Neon Orbit: Juego Arcade de reflejos">
     <title>Neon Orbit: Sonic Trinity</title>
+
+    <!-- ÍCONO SVG -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23050505'/><circle cx='256' cy='256' r='200' stroke='%230ff' stroke-width='20' fill='none'/><circle cx='256' cy='256' r='120' stroke='%230ff' stroke-width='10' fill='none' opacity='0.5'/><circle cx='256' cy='100' r='30' fill='%230ff'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000'/><circle cx='256' cy='256' r='200' stroke='%230ff' stroke-width='20' fill='none'/><circle cx='256' cy='256' r='120' stroke='%230ff' stroke-width='10' fill='none' opacity='0.5'/><circle cx='256' cy='100' r='30' fill='%230ff'/></svg>">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -18,6 +29,7 @@
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #gameCanvas {
@@ -36,6 +48,8 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
             box-sizing: border-box;
         }
 
@@ -59,10 +73,9 @@
             margin-top: 5px;
         }
 
-        /* Visual cues for controls */
         .control-hints {
             position: absolute;
-            bottom: 20px;
+            bottom: 40px;
             width: 100%;
             display: flex;
             justify-content: space-between;
@@ -72,6 +85,7 @@
             font-size: 12px;
             color: #0ff;
             pointer-events: none;
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         /* Menus */
@@ -90,6 +104,8 @@
             pointer-events: auto;
             transition: opacity 0.3s;
             backdrop-filter: blur(5px);
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .hidden {
@@ -119,26 +135,31 @@
             margin-bottom: 20px;
             font-size: 14px;
             line-height: 1.5;
-            max-width: 85%;
+            max-width: 90%;
         }
 
         .controls-info {
             display: flex;
-            gap: 20px;
+            gap: 10px;
             margin-bottom: 20px;
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
+            width: 100%;
+            justify-content: center;
         }
         .control-box {
             border: 1px solid #444;
             padding: 10px;
             border-radius: 5px;
+            flex: 1;
+            max-width: 120px;
+            text-align: center;
         }
 
         /* AI Text Areas */
         .ai-text-box {
             min-height: 50px;
-            width: 85%;
+            width: 90%;
             max-width: 400px;
             margin-bottom: 20px;
             padding: 12px;
@@ -153,11 +174,6 @@
             justify-content: center;
             font-style: italic;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
-        }
-        
-        .ai-text-box.error {
-            border-left-color: #ff0055;
-            color: #ffaaaa;
         }
 
         button {
@@ -177,6 +193,7 @@
             position: relative;
             overflow: hidden;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         button:active {
@@ -186,7 +203,6 @@
             transform: scale(0.96);
         }
 
-        /* AI Buttons */
         .ai-btn {
             font-size: 11px;
             padding: 8px 15px;
@@ -237,13 +253,13 @@
         <h1>NEON<br><span>TRINITY</span></h1>
         
         <div id="missionBox" class="ai-text-box">
-            Sistema de Audio: ONLINE.<br>Esperando piloto...
+            Sistema Online.<br>Esperando piloto...
         </div>
         <button id="generateMissionBtn" class="ai-btn">✨ GENERAR DIRECTIVA</button>
 
         <div class="controls-info">
-            <div class="control-box">LADO IZQ<br>Bajar Órbita</div>
-            <div class="control-box">LADO DER<br>Subir Órbita</div>
+            <div class="control-box">IZQUIERDA<br>Bajar</div>
+            <div class="control-box">DERECHA<br>Subir</div>
         </div>
 
         <button id="startBtn">INICIAR SISTEMA</button>
@@ -263,7 +279,7 @@
     </div>
 
     <script>
-        // --- AUDIO SYSTEM (Web Audio API) ---
+        // --- AUDIO SYSTEM ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
 
@@ -279,20 +295,16 @@
                 if (!audioCtx) return;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                
                 gain.gain.setValueAtTime(vol, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.start();
                 osc.stop(audioCtx.currentTime + duration);
             },
-            playJump: function(high) { // high = true si sube órbita
+            playJump: function(high) {
                 const f = high ? 600 : 300;
                 this.playTone(f, 'sine', 0.1, 0.1);
                 setTimeout(() => this.playTone(f * 1.5, 'sine', 0.1, 0.05), 50);
@@ -307,28 +319,55 @@
             }
         };
 
+        // --- SISTEMA DE "IA" OFFLINE (Base de datos local) ---
+        
+        const dbMissions = [
+            "Sobrevive al flujo de datos corruptos.",
+            "Mantén la sincronización orbital al 100%.",
+            "Evita la colisión con los cortafuegos rojos.",
+            "Recolecta fragmentos de código dorado.",
+            "Supera el protocolo de seguridad del Núcleo.",
+            "No dejes que el sistema te borre.",
+            "Demuestra que no eres un bot.",
+            "Alcanza la singularidad orbital."
+        ];
 
-        // --- GEMINI API SETUP ---
-        const apiKey = ""; 
+        const dbWorse = [
+            "Tu rendimiento ha decaído. Patético.",
+            "¿Eso es todo? Lo hiciste mejor antes.",
+            "El sistema detecta fatiga en tus reflejos.",
+            "Degradación cognitiva detectada.",
+            "Has empeorado. ¿Necesitas un reinicio?",
+            "Tus algoritmos son ineficientes hoy.",
+            "Decepcionante. Esperaba más de ti."
+        ];
 
-        async function callGemini(prompt) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+        const dbBetter = [
+            "Mejora incremental detectada. Bien.",
+            "Procesando... Has superado tu intento anterior.",
+            "Reflejos optimizados. Continúa así.",
+            "El aprendizaje automático está funcionando.",
+            "No está mal, piloto. Vas mejorando.",
+            "Sincronización superior a la anterior."
+        ];
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`Error: ${response.status}`);
-                const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch (error) {
-                console.error("Gemini Error:", error);
-                return "Error de conexión con el Núcleo AI.";
-            }
-        }
+        const dbRecord = [
+            "¡NUEVO RÉCORD DE SISTEMA! IMPRESIONANTE.",
+            "¡CAPACIDAD MÁXIMA ALCANZADA! ERES EL MEJOR.",
+            "¡Sobrecarga de habilidad! Has roto el historial.",
+            "EL NÚCLEO TE RECONOCE COMO ADMINISTRADOR.",
+            "¡Puntuación legendaria registrada!"
+        ];
+
+        const dbLow = [
+            "Error de capa 8: Usuario incompetente.",
+            "¿Estás intentando perder a propósito?",
+            "Rendimiento sub-óptimo. Esfuérzate más.",
+            "Ni siquiera has calentado los circuitos."
+        ];
+
+        // Variables de estado para la "IA"
+        let lastScore = parseInt(localStorage.getItem('neonOrbitLastScore') || 0);
 
         // --- DOM ELEMENTS ---
         const missionBox = document.getElementById('missionBox');
@@ -343,46 +382,67 @@
         const startBtn = document.getElementById('startBtn');
         const restartBtn = document.getElementById('restartBtn');
 
-        // --- AI LISTENERS ---
-        generateMissionBtn.addEventListener('click', async (e) => {
+        // --- AI LOGIC HANDLERS ---
+        generateMissionBtn.addEventListener('click', (e) => {
             e.stopPropagation(); 
             soundManager.init();
             soundManager.playTone(440, 'sine', 0.1);
-            missionBox.innerHTML = '<div class="loader"></div> Sincronizando...';
-            const prompt = "Genera una misión muy corta (max 12 palabras) estilo arcade espacial. Tono: Épico. Español.";
-            const text = await callGemini(prompt);
-            missionBox.innerText = text;
+            missionBox.innerHTML = '<div class="loader"></div> Accediendo...';
+            
+            // Simular delay de red
+            setTimeout(() => {
+                const randomMission = dbMissions[Math.floor(Math.random() * dbMissions.length)];
+                missionBox.innerText = `Directiva: ${randomMission}`;
+            }, 600);
         });
-        generateMissionBtn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: false});
-
-        analyzeBtn.addEventListener('click', async (e) => {
+        
+        analyzeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             soundManager.init();
             analysisBox.style.display = 'flex';
             analysisBox.innerHTML = '<div class="loader"></div> Computando...';
             analyzeBtn.style.display = 'none';
-            const currentScore = parseInt(finalScoreEl.innerText);
-            const prompt = `Usuario Game Over. Score: ${currentScore}. Dame un comentario sarcástico o motivador muy corto (max 1 frase) en Español.`;
-            const text = await callGemini(prompt);
-            analysisBox.innerText = text;
-        });
-        analyzeBtn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: false});
 
+            const currentScore = parseInt(finalScoreEl.innerText);
+            const highScore = parseInt(localStorage.getItem('neonOrbitHighScore') || 0);
+            // lastScore se actualiza al morir, así que comparamos con el valor antes de morir (stored)
+            // Pero aquí lastScore ya se actualizó en gameOver(). Necesitamos una lógica temporal o comparar.
+            
+            // Lógica de selección de mensaje
+            setTimeout(() => {
+                let msg = "";
+                
+                // Si es récord (score actual == high score y es mayor que 0)
+                if (currentScore >= highScore && currentScore > 0) {
+                     msg = dbRecord[Math.floor(Math.random() * dbRecord.length)];
+                }
+                // Si es una puntuación muy baja (< 30)
+                else if (currentScore < 30) {
+                    msg = dbLow[Math.floor(Math.random() * dbLow.length)];
+                }
+                // Comparar con la anterior (Ojo: lastScore se actualiza al final del juego, 
+                // usaremos una variable temporal guardada antes)
+                else if (currentScore > tempPrevScore) {
+                    msg = dbBetter[Math.floor(Math.random() * dbBetter.length)];
+                } else {
+                    msg = dbWorse[Math.floor(Math.random() * dbWorse.length)];
+                }
+
+                analysisBox.innerText = msg;
+            }, 800);
+        });
 
         // --- GAME LOGIC ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
         let gameState = 'MENU'; 
         let score = 0;
         let highScore = localStorage.getItem('neonOrbitHighScore') || 0;
+        let tempPrevScore = lastScore; // Guardamos la puntuación anterior antes de sobreescribirla
         highScoreEl.innerText = highScore;
         let frames = 0;
-        
-        // Variables de Dificultad
-        let spawnRate = 70; // Frames entre spawns iniciales (más lento al principio)
-        let minSpawnRate = 20; // Máxima velocidad de spawn
-
+        let spawnRate = 70; 
+        let minSpawnRate = 20; 
         let centerX, centerY;
         const laneCount = 3; 
         let radii = []; 
@@ -431,7 +491,7 @@
         class Player {
             constructor() {
                 this.angle = 0;
-                this.lane = 1; // Empezar en medio
+                this.lane = 1; 
                 this.currentRadius = radii[1];
                 this.targetRadius = radii[1];
                 this.speed = 0.05; 
@@ -441,24 +501,17 @@
             update() {
                 this.angle += this.speed;
                 this.targetRadius = radii[this.lane];
-                // Movimiento suave hacia la órbita
                 this.currentRadius += (this.targetRadius - this.currentRadius) * 0.4;
-                
                 this.x = centerX + Math.cos(this.angle) * this.currentRadius;
                 this.y = centerY + Math.sin(this.angle) * this.currentRadius;
-                
                 this.trail.push({x: this.x, y: this.y});
                 if (this.trail.length > 10) this.trail.shift();
             }
             move(dir) {
-                // dir: -1 (adentro), 1 (afuera)
                 const prevLane = this.lane;
                 this.lane += dir;
-                
-                // Clamp (limitar entre 0 y 2)
                 if (this.lane < 0) this.lane = 0;
                 if (this.lane >= laneCount) this.lane = laneCount - 1;
-
                 if (this.lane !== prevLane) {
                     soundManager.playJump(dir > 0);
                     createExplosion(this.x, this.y, 'rgba(0,255,255,0.3)', 3);
@@ -477,7 +530,6 @@
                 ctx.lineWidth = 4;
                 ctx.lineCap = 'round';
                 ctx.stroke();
-                
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
@@ -502,7 +554,6 @@
                 const r = radii[this.lane];
                 const x = centerX + Math.cos(this.angle) * r;
                 const y = centerY + Math.sin(this.angle) * r;
-
                 ctx.save();
                 if (this.type === 'enemy') {
                     ctx.shadowBlur = 10 + Math.sin(this.pulse) * 5;
@@ -538,9 +589,13 @@
 
         function initGame() {
             soundManager.init();
+            
+            // Guardar estado de "partida anterior" para comparar luego
+            tempPrevScore = parseInt(localStorage.getItem('neonOrbitLastScore') || 0);
+            
             score = 0;
             frames = 0;
-            spawnRate = 70; // Reiniciar dificultad
+            spawnRate = 70; 
             scoreEl.innerText = score;
             player = new Player();
             entities = [];
@@ -548,7 +603,6 @@
             gameState = 'PLAYING';
             startMenu.classList.add('hidden');
             gameOverMenu.classList.add('hidden');
-            
             setTimeout(() => {
                 analyzeBtn.style.display = 'block';
                 analysisBox.style.display = 'none';
@@ -564,21 +618,13 @@
 
         function spawnEntities() {
             spawnTimer++;
-            
-            // Lógica de dificultad progresiva
-            // Cada 5 puntos, reducimos el tiempo de aparición en 2 frames, hasta un límite.
             let currentRate = Math.max(minSpawnRate, 70 - (score * 0.8));
-            
             if (spawnTimer > currentRate) {
                 spawnTimer = 0;
-                
                 const lane = Math.floor(Math.random() * laneCount);
                 const spawnAngle = player.angle + Math.PI; 
-                
-                // Probabilidad de moneda baja al subir la dificultad para saturar de enemigos
                 const coinChance = Math.max(0.15, 0.3 - (score * 0.002));
                 const type = Math.random() < coinChance ? 'coin' : 'enemy'; 
-                
                 entities.push(new Obstacle(spawnAngle, lane, type));
             }
         }
@@ -586,12 +632,10 @@
         function checkCollisions() {
             const playerHitbox = 14;
             const pDist = player.currentRadius;
-
             for (let i = entities.length - 1; i >= 0; i--) {
                 const ent = entities[i];
                 const entDist = radii[ent.lane];
                 const radialDiff = Math.abs(pDist - entDist);
-                
                 if (radialDiff < 15) {
                     let pa = player.angle % (Math.PI * 2);
                     let ea = ent.angle % (Math.PI * 2);
@@ -600,7 +644,6 @@
                     let diff = Math.abs(pa - ea);
                     if (diff > Math.PI) diff = (Math.PI * 2) - diff;
                     const arcDist = diff * pDist;
-
                     if (arcDist < playerHitbox) {
                         if (ent.type === 'enemy') {
                             soundManager.playCrash();
@@ -613,12 +656,10 @@
                             score += 10;
                             scoreEl.innerText = score;
                             ent.active = false;
-                            // Pequeño incremento de velocidad global
                             player.speed = Math.min(0.08, 0.05 + (score * 0.0001)); 
                         }
                     }
                 }
-                // Eliminar si da la vuelta completa
                 if (player.angle - ent.angle > Math.PI * 1.5) {
                     ent.active = false;
                 }
@@ -629,11 +670,18 @@
         function gameOver() {
             gameState = 'GAMEOVER';
             finalScoreEl.innerText = score;
+            
+            // Guardar High Score
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('neonOrbitHighScore', highScore);
                 highScoreEl.innerText = highScore;
             }
+            
+            // Guardar Last Score (para comparaciones futuras)
+            localStorage.setItem('neonOrbitLastScore', score);
+            lastScore = score;
+
             setTimeout(() => gameOverMenu.classList.remove('hidden'), 500);
         }
 
@@ -656,13 +704,10 @@
         function drawBackground() {
             ctx.fillStyle = '#050505';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Efecto visual de velocidad en el fondo
             if (gameState === 'PLAYING' && frames % 20 === 0 && score > 50) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
                 ctx.fillRect(0,0,canvas.width, canvas.height);
             }
-
             ctx.lineWidth = 1;
             radii.forEach((r, index) => {
                 ctx.beginPath();
@@ -670,8 +715,6 @@
                 ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
                 ctx.stroke();
             });
-            
-            // Núcleo
             ctx.save();
             ctx.shadowBlur = 20 + Math.sin(frames * 0.1) * 10;
             ctx.shadowColor = '#0ff';
@@ -702,46 +745,43 @@
             draw();
         }
 
-        // --- INPUT HANDLER SPLIT SCREEN ---
         function handleInput(e) {
-            // Evitar clicks en UI
             if (e.target.tagName === 'BUTTON' || e.target.closest('.menu-screen')) return;
             if (gameState !== 'PLAYING') return;
             if (e.type === 'touchstart') e.preventDefault();
-
-            // Obtener coordenada X
             let x;
             if (e.type === 'touchstart') {
                 x = e.changedTouches[0].clientX;
             } else {
                 x = e.clientX;
             }
-
-            soundManager.init(); // Asegurar audio context
-
-            // Lógica Izquierda/Derecha
+            soundManager.init();
             if (x < window.innerWidth / 2) {
-                player.move(-1); // Ir hacia adentro (Izquierda)
+                player.move(-1); 
             } else {
-                player.move(1);  // Ir hacia afuera (Derecha)
+                player.move(1); 
             }
         }
 
         window.addEventListener('mousedown', handleInput);
         window.addEventListener('touchstart', handleInput, {passive: false});
-        
-        // Teclado: Flechas
         window.addEventListener('keydown', (e) => {
             if (gameState === 'PLAYING') {
                 if (e.code === 'ArrowLeft') player.move(-1);
                 if (e.code === 'ArrowRight') player.move(1);
             }
         });
+        
+        const btns = [startBtn, restartBtn];
+        btns.forEach(btn => {
+            btn.addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
+            btn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); initGame(); });
+        });
 
-        startBtn.addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
-        startBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); initGame(); });
-        restartBtn.addEventListener('click', (e) => { e.stopPropagation(); initGame(); });
-        restartBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); initGame(); });
+        // Fix botones IA
+        [generateMissionBtn, analyzeBtn].forEach(btn => {
+            btn.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: false});
+        });
 
         loop();
 
