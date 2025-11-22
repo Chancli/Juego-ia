@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Neon Orbit: Ultimate Fix</title>
+    <title>Neon Orbit: Radio</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23000'/><circle cx='256' cy='256' r='200' stroke='%230ff' stroke-width='20' fill='none'/><circle cx='256' cy='256' r='120' stroke='%230ff' stroke-width='10' fill='none' opacity='0.5'/><circle cx='256' cy='100' r='30' fill='%230ff'/></svg>">
 
@@ -22,23 +22,26 @@
         .score-display { color: #fff; font-size: 28px; text-shadow: 0 0 10px #0ff; font-weight: bold; }
         .hints { display: flex; justify-content: space-between; width: 100%; color: rgba(0, 255, 255, 0.4); font-size: 12px; }
         
-        /* Menús - Z-Index alto para asegurar interacción */
-        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; transition: opacity 0.3s; backdrop-filter: blur(8px); padding: 20px; }
+        /* Menús */
+        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; transition: opacity 0.3s; backdrop-filter: blur(8px); padding: 20px; overflow-y: auto; }
         .hidden { opacity: 0; pointer-events: none; z-index: 0; }
         
-        h1 { color: #0ff; font-size: 42px; margin: 0 0 10px 0; text-shadow: 0 0 20px #0ff; text-align: center; line-height: 1; }
+        h1 { color: #0ff; font-size: 42px; margin: 20px 0 10px 0; text-shadow: 0 0 20px #0ff; text-align: center; line-height: 1; }
         h1 span { color: #f05; font-size: 24px; letter-spacing: 6px; display: block; margin-top: 5px; }
         
         .status-box { width: 100%; max-width: 300px; border-left: 4px solid #0ff; background: rgba(0, 255, 255, 0.1); color: #dff; padding: 10px; margin-bottom: 15px; font-family: monospace; font-size: 12px; text-align: left; }
         
-        /* Botones */
-        button { background: transparent; color: #0ff; border: 2px solid #0ff; padding: 15px 30px; font-size: 18px; font-family: 'Orbitron', sans-serif; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); border-radius: 4px; text-transform: uppercase; margin-top: 10px; width: 90%; max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; pointer-events: auto; }
+        button { background: transparent; color: #0ff; border: 2px solid #0ff; padding: 15px 30px; font-size: 16px; font-family: 'Orbitron', sans-serif; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); border-radius: 4px; text-transform: uppercase; margin-top: 10px; width: 100%; max-width: 300px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; pointer-events: auto; }
         button:active { background: #0ff; color: #000; transform: scale(0.95); }
         
-        .file-btn { border-color: #f0f; color: #f0f; box-shadow: 0 0 10px rgba(255, 0, 255, 0.3); font-size: 14px; margin-bottom: 10px; }
+        .section-title { color: #888; font-size: 10px; margin: 10px 0 5px 0; letter-spacing: 2px; }
+        
+        .file-btn { border-color: #f0f; color: #f0f; box-shadow: 0 0 10px rgba(255, 0, 255, 0.3); font-size: 14px; margin-bottom: 5px; }
+        .radio-btn { border-color: #0f0; color: #0f0; box-shadow: 0 0 10px rgba(0, 255, 0, 0.3); font-size: 12px; margin-bottom: 5px; padding: 10px; }
+        
         #fileInput { display: none; }
+        #urlInput { width: 100%; max-width: 300px; background: #111; border: 1px solid #333; color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-family: monospace; }
 
-        /* Selector de Órbitas */
         .orbit-selector { display: flex; gap: 10px; margin-bottom: 20px; pointer-events: auto; }
         .orbit-btn { padding: 10px; font-size: 14px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #555; color: #555; box-shadow: none; margin: 0; cursor: pointer; }
         .orbit-btn.active { border-color: #0ff; color: #0ff; box-shadow: 0 0 10px #0ff; background: rgba(0, 255, 255, 0.1); }
@@ -56,33 +59,46 @@
 
     <!-- MENÚ INICIAL -->
     <div id="startMenu" class="menu-screen">
-        <h1>NEON<br><span>ULTIMATE</span></h1>
-        <div class="status-box" id="startMsg">SISTEMA: ONLINE.<br>Carga música para activar reactividad.</div>
+        <h1>NEON<br><span>RADIO</span></h1>
+        <div class="status-box" id="startMsg">MODO: RADIO ONLINE.<br>Sincronizando frecuencias...</div>
         
-        <div style="color: #888; font-size: 10px; margin-bottom: 5px;">NÚMERO DE ÓRBITAS</div>
+        <div class="section-title">DISEÑO DE PISTA</div>
         <div class="orbit-selector">
             <button class="orbit-btn" id="orb2">2</button>
             <button class="orbit-btn active" id="orb3">3</button>
             <button class="orbit-btn" id="orb4">4</button>
         </div>
 
+        <!-- SECCIÓN MP3 -->
+        <div class="section-title">OPCIÓN A: ARCHIVO LOCAL</div>
         <input type="file" id="fileInput" accept="audio/*">
         <button id="loadBtn" class="file-btn">📁 CARGAR MP3</button>
-        <button id="startBtn">JUGAR</button>
+
+        <!-- SECCIÓN RADIO -->
+        <div class="section-title">OPCIÓN B: RADIO LIVE</div>
+        <input type="text" id="urlInput" placeholder="Pega URL de Stream aquí...">
+        <button id="radioCustomBtn" class="radio-btn">🔗 CONECTAR URL</button>
+        
+        <div style="display:flex; gap:5px; width:100%; max-width:300px;">
+            <button id="radio1Btn" class="radio-btn" style="flex:1;">📻 Gaming</button>
+            <button id="radio2Btn" class="radio-btn" style="flex:1;">📻 Trap</button>
+        </div>
+
+        <button id="startBtn" style="margin-top: 20px; border-color: #fff; color: #fff;">JUGAR (SILENCIO)</button>
+        <br><br> <!-- Espacio extra para scroll -->
     </div>
 
     <!-- MENÚ GAME OVER -->
     <div id="gameOverMenu" class="menu-screen hidden">
-        <h1 style="color: #f05; text-shadow: 0 0 20px #f05;">FIN DE<br><span style="color:#fff; font-size:20px;">PISTA</span></h1>
-        <div class="status-box" style="border-color: #f05; color: #fdd;" id="overMsg">Calculando...</div>
+        <h1 style="color: #f05; text-shadow: 0 0 20px #f05;">FIN DE<br><span style="color:#fff; font-size:20px;">TRANSMISIÓN</span></h1>
+        <div class="status-box" style="border-color: #f05; color: #fdd;" id="overMsg">Señal perdida...</div>
         <div style="font-size: 20px; color: #fff; margin-bottom: 20px;">SCORE FINAL: <span id="finalScore">0</span></div>
         
-        <button id="changeMusicBtn" class="file-btn" style="font-size: 12px; padding: 10px;">🎵 CAMBIAR MÚSICA</button>
         <button id="restartBtn" style="border-color: #f05; color: #f05; box-shadow: 0 0 15px #f05;">REINTENTAR</button>
+        <button id="backMenuBtn" style="border-color: #fff; color: #fff; font-size: 12px; margin-top: 10px;">VOLVER AL MENÚ</button>
     </div>
 
     <script>
-        // Esperar a que el DOM esté listo para asignar eventos
         document.addEventListener('DOMContentLoaded', () => {
             const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
             const ui={
@@ -90,78 +106,149 @@
                 scoreEl:document.getElementById('scoreEl'),finalScoreEl:document.getElementById('finalScore'),
                 startMsg:document.getElementById('startMsg'),overMsg:document.getElementById('overMsg'),
                 startBtn:document.getElementById('startBtn'),restartBtn:document.getElementById('restartBtn'),
+                backMenuBtn:document.getElementById('backMenuBtn'),
                 loadBtn:document.getElementById('loadBtn'),fileInput:document.getElementById('fileInput'),
-                changeMusicBtn:document.getElementById('changeMusicBtn'),
+                urlInput:document.getElementById('urlInput'),
+                radioCustomBtn:document.getElementById('radioCustomBtn'),
+                radio1Btn:document.getElementById('radio1Btn'),
+                radio2Btn:document.getElementById('radio2Btn'),
                 orbBtns: [document.getElementById('orb2'), document.getElementById('orb3'), document.getElementById('orb4')]
             };
             
             let gameState='MENU',score=0,frames=0,W,H,CX,CY;
-            let laneCount = 3; // Por defecto 3
+            let laneCount = 3;
             let radii=[], baseRadii=[];
             
-            const aiDb={intro:["Visualizador listo.","Selecciona tu dificultad.","Ritmo y reflejos."],win:["Sincronía total."],fail:["Desincronizado."]};
+            const aiDb={intro:["Sintonizando frecuencia...","Señal en vivo.","Cuidado con la interferencia."],win:["Transmisión completada."],fail:["Señal interrumpida."]};
             
             const AudioContext=window.AudioContext||window.webkitAudioContext;
-            let actx, analyser, dataArray, musicSource, audioBuffer;
+            let actx, analyser, dataArray, sourceNode;
+            let audioEl; // Elemento HTML Audio para radio
             
             let rawBass = 0;
             let kickValue = 0; 
             let beatDetected = false;
             let isMusicLoaded = false;
+            let volHistory = [];
             let framesSinceSpawn = 0;
             let pendingSpawn = false;
 
+            // URLs de Radio (Streams que suelen permitir CORS o funcionar bien)
+            const RADIOS = {
+                gaming: "https://stream.zeno.fm/0r0xa792kwzuv", // Gaming Radio genérica
+                trap: "https://stream.zeno.fm/f3wvbbqmdg8uv"   // Trap/Phonk Radio genérica
+            };
+
             const audio={
                 init:()=>{if(!actx)actx=new AudioContext();if(actx.state==='suspended')actx.resume();},
+                
+                // Efectos
                 playSfx:(f,t,d)=>{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type=t;o.frequency.value=f;g.gain.value=0.1;g.gain.exponentialRampToValueAtTime(0.01,actx.currentTime+d);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d);},
                 jump:(u)=>audio.playSfx(u?600:300,'sine',0.1),
                 coin:()=>{audio.playSfx(1200,'square',0.05);setTimeout(()=>audio.playSfx(1800,'square',0.1),50);},
                 crash:()=>audio.playSfx(100,'sawtooth',0.4),
+
+                // RESET TOTAL DE AUDIO (Importante para cambiar fuentes)
+                reset: () => {
+                    if(sourceNode) { try{sourceNode.disconnect();}catch(e){} }
+                    if(audioEl) { audioEl.pause(); audioEl.src = ""; audioEl = null; }
+                    isMusicLoaded = false;
+                },
+
+                // MODO 1: ARCHIVO LOCAL
                 handleFileSelect: (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
                     audio.init();
-                    ui.loadBtn.innerText = "PROCESANDO...";
+                    audio.reset();
+                    ui.loadBtn.innerText = "DECODIFICANDO...";
+                    
                     const reader = new FileReader();
                     reader.onload = function(ev) {
                         actx.decodeAudioData(ev.target.result, function(buffer) {
-                            audioBuffer = buffer;
+                            // Crear Buffer Source
+                            sourceNode = actx.createBufferSource();
+                            sourceNode.buffer = buffer;
+                            sourceNode.loop = true;
+                            
+                            // Conectar
+                            analyser = actx.createAnalyser();
+                            analyser.fftSize = 256; 
+                            sourceNode.connect(analyser);
+                            analyser.connect(actx.destination);
+                            
+                            dataArray = new Uint8Array(analyser.frequencyBinCount);
                             isMusicLoaded = true;
-                            ui.loadBtn.innerText = "▶️ " + file.name.substring(0,15)+"...";
-                            ui.loadBtn.style.borderColor = "#0f0";
-                            ui.loadBtn.style.color = "#0f0";
-                            ui.startBtn.innerText = "JUGAR CON MÚSICA";
-                            if(gameState === 'GAMEOVER') init();
-                        }, function(e){ ui.loadBtn.innerText = "ERROR AUDIO"; });
+                            
+                            ui.loadBtn.innerText = "LISTO: " + file.name.substring(0,10)+"...";
+                            ui.startBtn.innerText = "JUGAR (MP3)";
+                            ui.startMsg.innerText = "MP3 Cargado Correctamente.";
+                        }, function(e){ ui.loadBtn.innerText = "ERROR"; });
                     };
                     reader.readAsArrayBuffer(file);
                 },
-                startMusic: () => {
-                    if (!isMusicLoaded || !audioBuffer) return;
-                    if (musicSource) musicSource.stop();
-                    musicSource = actx.createBufferSource();
-                    musicSource.buffer = audioBuffer;
-                    musicSource.loop = true;
+
+                // MODO 2: RADIO ONLINE (STREAM)
+                playRadio: (url) => {
+                    audio.init();
+                    audio.reset();
+                    ui.startMsg.innerText = "CONECTANDO RADIO...";
+                    
+                    // Crear elemento de audio HTML5
+                    audioEl = new Audio();
+                    audioEl.crossOrigin = "anonymous"; // CRÍTICO PARA VISUALIZAR
+                    audioEl.src = url;
+                    
+                    // Crear Source desde el elemento
+                    sourceNode = actx.createMediaElementSource(audioEl);
                     analyser = actx.createAnalyser();
-                    analyser.fftSize = 256; 
-                    musicSource.connect(analyser);
+                    analyser.fftSize = 256;
+                    
+                    sourceNode.connect(analyser);
                     analyser.connect(actx.destination);
-                    musicSource.start(0);
+                    
                     dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    
+                    // Intentar reproducir
+                    audioEl.play().then(() => {
+                        isMusicLoaded = true;
+                        ui.startMsg.innerText = "RADIO CONECTADA 📡";
+                        ui.startBtn.innerText = "JUGAR (EN VIVO)";
+                    }).catch(e => {
+                        console.error(e);
+                        ui.startMsg.innerText = "ERROR: La radio bloqueó la visualización (CORS).";
+                    });
                 },
-                stopMusic: () => { if (musicSource) { try { musicSource.stop(); } catch(e){} } },
+
+                startPlayback: () => {
+                    if(sourceNode && sourceNode.start) sourceNode.start(0); // Para Buffer (MP3)
+                    if(audioEl) audioEl.play(); // Para Radio
+                },
+
+                stopPlayback: () => {
+                    if(sourceNode && sourceNode.stop) try{sourceNode.stop();}catch(e){}
+                    if(audioEl) audioEl.pause();
+                },
+                
                 analyze: () => {
                     if (!analyser) return;
                     analyser.getByteFrequencyData(dataArray);
+                    
                     let sum = 0;
-                    for(let i = 0; i < 4; i++) sum += dataArray[i];
-                    rawBass = sum / 4;
-                    const normalizedBass = Math.max(0, (rawBass - 100) / 140);
-                    if (normalizedBass > kickValue) {
-                        kickValue = normalizedBass; 
-                    } else {
-                        kickValue *= 0.90; 
-                    }
+                    // Analizar bajos
+                    for(let i = 0; i < 5; i++) sum += dataArray[i];
+                    rawBass = sum / 5;
+                    
+                    // Auto-Gain
+                    if(volHistory.length > 60) volHistory.shift();
+                    volHistory.push(rawBass);
+                    const maxRecent = Math.max(...volHistory, 100);
+                    
+                    const normalizedBass = Math.max(0, (rawBass - 80) / (maxRecent * 0.8));
+
+                    if (normalizedBass > kickValue) kickValue = normalizedBass; 
+                    else kickValue *= 0.90; 
+
                     beatDetected = (normalizedBass > 0.75);
                 }
             };
@@ -211,13 +298,24 @@
             
             let player,obstacles=[],coins=[],particles=[],lastEnemyLane=-1;
 
-            function init(){audio.init();if(isMusicLoaded) audio.startMusic();score=0;frames=0;framesSinceSpawn=0;lastEnemyLane=-1;ui.scoreEl.innerText=0;player=new Player();obstacles=[];coins=[];particles=[];gameState='PLAYING';ui.startMenu.classList.add('hidden');ui.gameOverMenu.classList.add('hidden');loop();}
+            function init(){
+                if(isMusicLoaded) audio.startPlayback(); // Iniciar el audio preparado
+                else audio.init(); // O iniciar silencio
+                
+                score=0;frames=0;framesSinceSpawn=0;lastEnemyLane=-1;
+                ui.scoreEl.innerText=0;player=new Player();obstacles=[];coins=[];particles=[];
+                gameState='PLAYING';
+                ui.startMenu.classList.add('hidden');
+                ui.gameOverMenu.classList.add('hidden');
+                loop();
+            }
             
             function checkSpawn(){
                 const MIN_RATE = 60, START_RATE = 130;
                 const targetRate = Math.max(MIN_RATE, START_RATE - Math.floor(score/2));
                 framesSinceSpawn++;
                 if (framesSinceSpawn > targetRate) pendingSpawn = true;
+
                 let doSpawn = false;
                 if (pendingSpawn) {
                     if (isMusicLoaded) {
@@ -226,6 +324,7 @@
                         doSpawn = true;
                     }
                 }
+
                 if (doSpawn) {
                     spawnEnemy();
                     framesSinceSpawn = 0;
@@ -238,6 +337,7 @@
                 const travelDistance = player.rotationSpeed * TRAVEL_TIME_FRAMES;
                 const targetAngle = player.angle + travelDistance;
                 if(coins.some(c => Math.abs(c.angle - targetAngle) < 0.5)) return;
+
                 let lane=Math.floor(Math.random() * laneCount); 
                 if(lastEnemyLane!==-1 && laneCount > 1){
                     if(Math.random() < 0.6) {
@@ -245,14 +345,18 @@
                     }
                 }
                 lastEnemyLane=lane;
-                const isJumper = (score > 5) && (Math.random() < 0.25) && (laneCount > 1);
+                const isJumper = (score > 5) && (Math.random() < 0.25); // Jumper balanceado
+
                 obstacles.push({
                     angle: targetAngle,
                     lane: lane,
                     currentRadius: radii[lane],
                     active: true,
                     jumpTimer: 0,
-                    isJumper: isJumper
+                    isJumper: isJumper,
+                    // Datos para boomerang
+                    originalLane: lane,
+                    jumpPhase: 0
                 });
             }
 
@@ -274,34 +378,48 @@
                 if(gameState!=='PLAYING')return;
                 frames++;
                 if(isMusicLoaded) audio.analyze();
+
                 const expansion = kickValue * 18; 
                 radii = baseRadii.map(r => r + expansion);
+
                 player.update();
                 checkSpawn();
                 manageCoins();
+
                 obstacles.forEach(o => {
                     if(!o.active) return;
+                    
+                    // Lógica Boomerang / Jumper
                     if(o.isJumper && beatDetected && isMusicLoaded && o.jumpTimer === 0){
-                        if(Math.random() < 0.6){ 
+                        if(o.jumpPhase === 0 && Math.random() < 0.5) { // IDA
                             const possibleLanes = [];
                             if(o.lane > 0) possibleLanes.push(o.lane - 1);
                             if(o.lane < laneCount - 1) possibleLanes.push(o.lane + 1);
-                            const distToPlayer = Math.abs(o.angle - player.angle);
-                            if(distToPlayer > 0.8 && distToPlayer < 3.0 && possibleLanes.length > 0) {
-                                const newLane = possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
+                            
+                            if(possibleLanes.length > 0) {
+                                o.lane = possibleLanes[Math.floor(Math.random() * possibleLanes.length)];
                                 const ex=CX+Math.cos(o.angle)*o.currentRadius, ey=CY+Math.sin(o.angle)*o.currentRadius;
                                 createParticles(ex, ey, '#f80'); 
-                                o.lane = newLane;
-                                o.jumpTimer = 30;
+                                o.jumpPhase = 1;
+                                o.jumpTimer = 40; 
                             }
+                        } else if(o.jumpPhase === 1) { // VUELTA
+                            o.lane = o.originalLane;
+                            const ex=CX+Math.cos(o.angle)*o.currentRadius, ey=CY+Math.sin(o.angle)*o.currentRadius;
+                            createParticles(ex, ey, '#f80'); 
+                            o.jumpPhase = 2;
+                            o.jumpTimer = 999;
                         }
                     }
                     if(o.jumpTimer > 0) o.jumpTimer--;
+
                     const targetR = radii[o.lane];
-                    o.currentRadius += (targetR - o.currentRadius) * 0.4;
+                    o.currentRadius += (targetR - o.currentRadius) * 0.2;
                 });
+
                 const SAFE_ZONE=Math.PI*2; 
                 obstacles=obstacles.filter(e=>e.active&&(e.angle>player.angle-SAFE_ZONE));
+                
                 const checkHit=(e,isCoin)=>{
                     const r = isCoin ? radii[e.lane] : e.currentRadius; 
                     const ex=CX+Math.cos(e.angle)*r,ey=CY+Math.sin(e.angle)*r,dist=Math.hypot(player.x-ex,player.y-ey);
@@ -321,11 +439,8 @@
             function createParticles(x,y,color){for(let i=0;i<8;i++)particles.push({x,y,color,vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*8,life:1});}
             
             function draw(){
-                if (kickValue > 0.8 && gameState === 'PLAYING') {
-                    ctx.fillStyle = 'rgba(20, 0, 30, 0.6)'; 
-                } else {
-                    ctx.fillStyle = '#000';
-                }
+                if (kickValue > 0.8 && gameState === 'PLAYING') ctx.fillStyle = 'rgba(20, 0, 30, 0.6)'; 
+                else ctx.fillStyle = '#000';
                 ctx.fillRect(0,0,W,H);
                 
                 if(isMusicLoaded) {
@@ -370,42 +485,64 @@
                     particles.forEach(p=>{ctx.fillStyle=p.color;ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
                 }
             }
-            function gameOver(){gameState='GAMEOVER';audio.stopMusic();ui.finalScoreEl.innerText=score;ui.overMsg.innerText=aiDb.fail[Math.floor(Math.random()*aiDb.fail.length)];ui.gameOverMenu.classList.remove('hidden');}
+            
+            function gameOver(){
+                gameState='GAMEOVER';
+                audio.stopPlayback(); // Detener radio/mp3
+                ui.finalScoreEl.innerText=score;
+                ui.overMsg.innerText=aiDb.fail[Math.floor(Math.random()*aiDb.fail.length)];
+                ui.gameOverMenu.classList.remove('hidden');
+            }
+            
+            function backToMenu(){
+                gameState='MENU';
+                ui.gameOverMenu.classList.add('hidden');
+                ui.startMenu.classList.remove('hidden');
+                audio.stopPlayback();
+                ui.startMsg.innerText = "SISTEMA: REINICIADO.";
+            }
+
             function loop(){if(gameState==='PLAYING')requestAnimationFrame(loop);update();draw();}
             function handleInput(x){if(gameState!=='PLAYING')return; if(!isMusicLoaded) audio.init(); if(x<W/2)player.move(-1);else player.move(1);}
             
             window.addEventListener('mousedown',e=>handleInput(e.clientX));
             window.addEventListener('touchstart',e=>{if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;e.preventDefault();handleInput(e.changedTouches[0].clientX);},{passive:false});
             
-            // LISTENERS SEGUROS
-            ui.loadBtn.addEventListener('click', (e) => { e.stopPropagation(); ui.fileInput.click(); });
+            // Eventos de Botones (StopPropagation crítico)
+            const bind = (el, fn) => {
+                if(!el) return;
+                el.addEventListener('click', (e) => { e.stopPropagation(); fn(); });
+                el.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); fn(); });
+            };
+
+            bind(ui.loadBtn, () => ui.fileInput.click());
             ui.fileInput.addEventListener('change', audio.handleFileSelect);
-            ui.changeMusicBtn.addEventListener('click', (e) => { e.stopPropagation(); ui.fileInput.click(); });
-
-            ui.startBtn.addEventListener('click', (e) => { e.stopPropagation(); init(); });
-            ui.restartBtn.addEventListener('click', (e) => { e.stopPropagation(); init(); });
             
-            // Soporte touch explícito para botones
-            ui.startBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); init(); });
-            ui.restartBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); init(); });
-            ui.loadBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); ui.fileInput.click(); });
-            ui.changeMusicBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); ui.fileInput.click(); });
+            // Botón de Custom URL
+            bind(ui.radioCustomBtn, () => {
+                const url = ui.urlInput.value.trim();
+                if(url) audio.playRadio(url);
+            });
 
-            // Listeners de Selector de Órbita
+            // Botones de Radio Preset
+            bind(ui.radio1Btn, () => audio.playRadio(RADIOS.gaming));
+            bind(ui.radio2Btn, () => audio.playRadio(RADIOS.trap));
+
+            bind(ui.startBtn, init);
+            bind(ui.restartBtn, init);
+            bind(ui.backMenuBtn, backToMenu);
+
+            // Botones de Órbitas
             ui.orbBtns.forEach((btn, index) => {
-                const handler = (e) => {
-                    e.stopPropagation();
+                bind(btn, () => {
                     ui.orbBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     laneCount = index + 2;
                     updateRadii();
-                };
-                btn.addEventListener('click', handler);
-                btn.addEventListener('touchstart', handler);
+                });
             });
 
             ui.startMsg.innerHTML="SISTEMA: ONLINE.<br>"+aiDb.intro[Math.floor(Math.random()*aiDb.intro.length)];
-            // Inicializar radios
             updateRadii();
             draw();
         });
