@@ -52,7 +52,7 @@
         .theme-crimson { background: linear-gradient(45deg, #222, #f00); border-color: #f00; }
         .theme-deep { background: linear-gradient(45deg, #000, #80f); border-color: #80f; }
         
-        /* LEADERBOARD DREAMLO */
+        /* LEADERBOARD */
         .leaderboard-container { width: 100%; max-width: 300px; margin-top: 20px; max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.8); border: 2px solid #333; padding: 10px; border-radius: 4px; }
         .leaderboard-item { display: flex; justify-content: space-between; font-size: 14px; color: #aaa; border-bottom: 1px solid #222; padding: 8px 0; font-family: monospace; }
         .leaderboard-item:first-child { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
@@ -64,6 +64,8 @@
         #submitScoreBtn { width: 40%; padding: 10px; font-size: 12px; margin-top: 0; border-color: #0f0; color: #0f0; }
         
         #startMenuContent { width: 100%; display: flex; flex-direction: column; align-items: center; padding-bottom: 50px; }
+        .controls-guide { display: flex; gap: 20px; margin-bottom: 20px; width: 100%; max-width: 300px; }
+        .c-box { border: 1px solid #333; color: #888; padding: 10px; flex: 1; text-align: center; font-size: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -73,11 +75,10 @@
         <div class="hints"><span>&lt; IZQUIERDA</span><span>DERECHA &gt;</span></div>
     </div>
 
-    <!-- MENÚ INICIAL -->
     <div id="startMenu" class="menu-screen">
         <div id="startMenuContent">
             <h1>NEON<br><span>TRINITY</span></h1>
-            <div class="status-box" id="startMsg">SISTEMA: ONLINE.<br>Base de datos global activa.</div>
+            <div class="status-box" id="startMsg">SISTEMA: ONLINE.<br>Leaderboard Global Activado.</div>
             
             <div class="section-title">DISEÑO DE PISTA</div>
             <div class="orbit-selector">
@@ -103,9 +104,9 @@
         </div>
     </div>
 
-    <!-- MENÚ CONFIGURACIÓN -->
     <div id="settingsMenu" class="menu-screen hidden">
         <h2 style="color:#fff; margin-bottom: 30px;">PERSONALIZACIÓN</h2>
+        <div class="section-title">TEMA VISUAL</div>
         <div class="theme-selector">
             <div class="theme-btn theme-cyan active" data-theme="cyan"></div>
             <div class="theme-btn theme-crimson" data-theme="crimson"></div>
@@ -115,7 +116,6 @@
         <button id="closeSettingsBtn" style="border-color: #fff; color: #fff; margin-top: 30px;">GUARDAR Y SALIR</button>
     </div>
 
-    <!-- MENÚ GAME OVER -->
     <div id="gameOverMenu" class="menu-screen hidden">
         <h1 style="color: #f05; text-shadow: 0 0 20px #f05;">FIN DE<br><span style="color:#fff; font-size:20px;">PISTA</span></h1>
         <div class="status-box" style="border-color: #f05; color: #fdd;" id="overMsg">Calculando...</div>
@@ -138,12 +138,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CLAVES DE DREAMLO (Gratis) ---
-            // Para que funcione en TU juego, ve a dreamlo.com, crea un leaderboard
-            // y pega tus claves aquí. He dejado unas de prueba.
-            const DREAMLO_PUBLIC_KEY = "692227188f40bb18643700dc"; 
-            const DREAMLO_PRIVATE_KEY = "TRiwuE9O6kOygeyvFBgXAwwscsGX2BVEGCYH_fF9EWNQ"; 
-            
+            // --- CLAVES DREAMLO (PON TUS CLAVES AQUÍ) ---
+            const DREAMLO_PUBLIC = "692227188f40bb18643700dc"; 
+            const DREAMLO_PRIVATE = "TRiwuE9O6kOygeyvFBgXAwwscsGX2BVEGCYH_fF9EWNQ"; // ¡Reemplaza esto!
+
             const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
             
             const ui={
@@ -180,14 +178,13 @@
                 gold: { player: '#ffd700', enemy: '#cccccc', jumper: '#ff4500', coin: '#ffd700', shadow: '#ffd700' }
             };
             
-            const aiDb={intro:["Conectado a Dreamlo.","Récords globales listos."],win:["Sincronía."],fail:["Desconexión."]};
+            const aiDb={intro:["Filtros listos.","Bajos aislados."],win:["Sincronía."],fail:["Fallo."]};
             const RADIOS = { gaming: "https://stream.zeno.fm/0r0xa792kwzuv", trap: "https://stream.zeno.fm/f3wvbbqmdg8uv", bass: "https://bassdrive.radioca.st/;" };
 
-            // --- AUDIO ENGINE (FILTERED) ---
+            // --- AUDIO ENGINE ---
             const AudioContext=window.AudioContext||window.webkitAudioContext;
             let actx, analyser, dataArray, sourceNode, audioEl, filterNode;
             let globalAudioBuffer = null;
-            
             let rawBass = 0, kickVisual = 0, beatDetected = false, isMusicLoaded = false;
             let beatHeat = 0, volHistory = [], framesSinceSpawn = 0, pendingSpawn = false, flashValue = 0;
             let energyHistory = [], prevSpectrum = null;
@@ -196,7 +193,6 @@
 
             const audio = {
                 init: () => { if(!actx) actx = new AudioContext(); if(actx.state === 'suspended') actx.resume(); },
-                
                 playSfx: (f, t, d) => {
                     if(!actx) return;
                     const o = actx.createOscillator(), g = actx.createGain();
@@ -209,14 +205,11 @@
                 jump: (u) => audio.playSfx(u ? 600 : 300, 'sine', 0.1),
                 coin: () => { audio.playSfx(1200, 'square', 0.05); setTimeout(() => audio.playSfx(1800, 'square', 0.1), 50); },
                 crash: () => audio.playSfx(100, 'sawtooth', 0.4),
-
                 reset: () => { 
                     if(sourceNode) { try{sourceNode.disconnect(); if(sourceNode.stop) sourceNode.stop();}catch(e){} }
                     if(audioEl) { audioEl.pause(); audioEl.src = ""; audioEl.remove(); audioEl = null; }
-                    isMusicLoaded = false; 
-                    energyHistory = [];
+                    isMusicLoaded = false; energyHistory = [];
                 },
-                
                 handleFileSelect: (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
@@ -235,7 +228,6 @@
                     };
                     reader.readAsArrayBuffer(file);
                 },
-                
                 playRadio: (url) => {
                     audio.init(); audio.reset();
                     globalAudioBuffer = null; 
@@ -245,7 +237,6 @@
                     setupAudioGraph(sourceNode);
                     audioEl.play().then(() => { isMusicLoaded = true; ui.startMsg.innerText = "RADIO CONECTADA 📡"; ui.startBtn.innerText = "JUGAR (EN VIVO)"; }).catch(e => { ui.startMsg.innerText = "ERROR STREAM."; });
                 },
-                
                 startPlayback: () => { 
                     if (globalAudioBuffer) {
                         if (sourceNode) try { sourceNode.stop(); sourceNode.disconnect(); } catch(e) {}
@@ -256,18 +247,13 @@
                         sourceNode.start(0);
                     } else if (audioEl) { audioEl.play(); }
                 },
-                
                 stopPlayback: () => { if(sourceNode && sourceNode.buffer) try{sourceNode.stop();}catch(e){} if(audioEl) audioEl.pause(); },
-                
                 analyze: () => {
                     if (!analyser) return;
                     analyser.getByteFrequencyData(dataArray);
                     const now = actx.currentTime;
-                    
-                    let sumSquares = 0; 
-                    for(let i = 0; i < 10; i++) sumSquares += dataArray[i] * dataArray[i];
+                    let sumSquares = 0; for(let i = 0; i < 10; i++) sumSquares += dataArray[i] * dataArray[i];
                     const rms = Math.sqrt(sumSquares / 10);
-
                     let flux = 0;
                     if (prevSpectrum) {
                         for (let i = 0; i < 10; i++) {
@@ -276,23 +262,15 @@
                         }
                     }
                     prevSpectrum = new Uint8Array(dataArray);
-
                     const combinedScore = (rms * 0.3) + (flux * 0.7);
                     energyHistory.push(combinedScore);
                     if (energyHistory.length > HISTORY_SIZE) energyHistory.shift();
-
                     const sortedHistory = [...energyHistory].sort((a, b) => a - b);
                     const index85 = Math.floor(0.85 * sortedHistory.length);
                     const threshold = Math.max(sortedHistory[index85] || 0, 40) * 1.1;
-
                     if (combinedScore > threshold && (now - lastBeatTime > 0.06)) {
-                        beatDetected = true;
-                        lastBeatTime = now;
-                        beatHeat = Math.min(beatHeat + 0.15, 0.7);
-                    } else {
-                        beatDetected = false;
-                    }
-                    
+                        beatDetected = true; lastBeatTime = now; beatHeat = Math.min(beatHeat + 0.15, 0.7);
+                    } else { beatDetected = false; }
                     beatHeat *= 0.94;
                     const targetVisual = Math.min(rms / 200, 1.0); 
                     kickVisual += (targetVisual - kickVisual) * 0.2;
@@ -311,28 +289,25 @@
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
             }
 
-            // --- DREAMLO LEADERBOARD ---
+            // --- DREAMLO LEADERBOARD (PROXY FIX) ---
             async function loadLeaderboard() {
-                ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Conectando a Dreamlo...</div>';
+                ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Cargando Global...</div>';
+                // PROXY ALLORIGINS para saltar CORS
+                const proxy = "https://api.allorigins.win/get?url=";
+                const dreamloUrl = encodeURIComponent(`http://dreamlo.com/lb/${DREAMLO_PUBLIC}/json`);
                 
-                // NOTA: Para que funcione en tu juego real, VE A DREAMLO.COM
-                // 1. Crea un leaderboard.
-                // 2. Reemplaza YOUR_PUBLIC_KEY abajo.
-                const publicUrl = `https://www.dreamlo.com/lb/${DREAMLO_PUBLIC_KEY}/json`;
-
                 try {
-                    const response = await fetch(publicUrl);
+                    const response = await fetch(proxy + dreamloUrl);
                     const data = await response.json();
-                    const scores = data.dreamlo.leaderboard.entry || [];
+                    const json = JSON.parse(data.contents);
                     
-                    // Normalizar si es un solo objeto o array
+                    const scores = json.dreamlo.leaderboard?.entry || [];
                     const list = Array.isArray(scores) ? scores : [scores];
                     
                     ui.leaderboardList.innerHTML = '';
-                    if (list.length === 0) {
-                        ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Sé el primero en ganar.</div>';
+                    if (!list || list.length === 0) {
+                        ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Sé el primero.</div>';
                     } else {
-                        // Dreamlo ya devuelve ordenado, solo cortamos a 10
                         list.slice(0, 10).forEach((s, i) => {
                             const div = document.createElement('div');
                             div.className = 'leaderboard-item';
@@ -341,8 +316,8 @@
                         });
                     }
                 } catch (e) {
-                    console.warn("Leaderboard offline", e);
-                    ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Global Offline (CORS/Error)</div>';
+                    console.warn("Leaderboard Proxy Error", e);
+                    ui.leaderboardList.innerHTML = '<div class="leaderboard-item">Error de Conexión</div>';
                 }
             }
 
@@ -353,21 +328,24 @@
                 ui.submitScoreBtn.disabled = true;
                 ui.submitScoreBtn.innerText = "...";
                 
-                // NOTA: Reemplaza YOUR_PRIVATE_KEY
-                const privateUrl = `https://www.dreamlo.com/lb/${DREAMLO_PRIVATE_KEY}/add/${name}/${score}`;
+                // PROXY NO ES NECESARIO PARA ESCRIBIR (OJO: Dreamlo acepta GET directos a veces, pero el proxy asegura)
+                // Nota: Para escribir, es mejor intentar directo primero (imagen invisible o fetch no-cors)
+                // Usaremos una imagen para evitar CORS en la escritura (truco viejo)
+                const addUrl = `http://dreamlo.com/lb/${DREAMLO_PRIVATE}/add/${name}/${score}`;
                 
-                try {
-                    await fetch(privateUrl); // Enviar dato
-                    ui.submitScoreArea.style.display = 'none';
-                    setTimeout(loadLeaderboard, 1000); // Recargar lista
-                } catch (e) {
-                    console.error("Error saving", e);
-                    ui.submitScoreBtn.innerText = "ERROR";
-                    ui.submitScoreBtn.disabled = false;
-                }
+                const img = new Image();
+                img.src = addUrl;
+                img.onload = () => {
+                     ui.submitScoreArea.style.display = 'none';
+                     loadLeaderboard();
+                };
+                img.onerror = () => {
+                     // Si falla la imagen (raro), forzamos recarga igual
+                     ui.submitScoreArea.style.display = 'none';
+                     setTimeout(loadLeaderboard, 2000);
+                };
             }
 
-            // --- CORE GAME FUNCTIONS ---
             function loadConfig() {
                 const saved = localStorage.getItem('neonConfig');
                 if(saved) { const parsed = JSON.parse(saved); config.theme = parsed.theme || 'cyan'; }
@@ -442,10 +420,8 @@
                 if(gameState!=='PLAYING')return;
                 frames++;
                 if(isMusicLoaded) audio.analyze();
-                
                 const expansion = kickVisual * 12; 
                 radii = baseRadii.map(r => r + expansion);
-
                 player.update(); checkSpawn(); manageCoins();
                 obstacles.forEach(o => {
                     if(!o.active) return;
@@ -491,16 +467,12 @@
             function createParticles(x,y,color){for(let i=0;i<8;i++)particles.push({x,y,color,vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*8,life:1});}
             
             function draw(){
-                // 1. FONDO NEGRO PURO
                 ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-                
-                // 2. CAPA ATMÓSFERA (Blanco azulado + Heat)
                 if (gameState === 'PLAYING' && beatHeat > 0.05) {
-                    const alpha = Math.min(beatHeat * 0.4, 0.4); // Max 40% opacidad
+                    const alpha = Math.min(beatHeat * 0.3, 0.3);
                     ctx.fillStyle = `rgba(225, 250, 255, ${alpha})`; 
                     ctx.fillRect(0,0,W,H);
                 }
-
                 if(isMusicLoaded) {
                     const coreSize = 15 + (kickVisual * 20); 
                     const coreAlpha = 0.3 + (kickVisual * 0.5);
@@ -512,7 +484,6 @@
                     ctx.globalAlpha = 1; ctx.fillStyle = '#fff';
                     ctx.beginPath(); ctx.arc(CX, CY, coreSize * 0.8, 0, Math.PI*2); ctx.fill();
                 }
-
                 ctx.lineWidth=2;
                 radii.forEach((r,i)=>{
                     ctx.beginPath();ctx.arc(CX,CY,r,0,Math.PI*2);
@@ -521,7 +492,6 @@
                     ctx.shadowBlur = kickVisual * 10; ctx.shadowColor = config.colors.shadow;
                     ctx.globalAlpha = glow; ctx.stroke(); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
                 });
-                
                 if(gameState==='PLAYING'){
                     coins.forEach(c=>{const r=radii[c.lane],ex=CX+Math.cos(c.angle)*r,ey=CY+Math.sin(c.angle)*r;ctx.fillStyle=config.colors.coin;ctx.shadowBlur=15+(kickVisual*15);ctx.shadowColor=config.colors.coin;ctx.beginPath();ctx.arc(ex,ey,6+(kickVisual*3),0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;});
                     obstacles.forEach(o=>{if(!o.active)return;
@@ -545,8 +515,6 @@
                 ui.finalScoreEl.innerText=score;
                 ui.overMsg.innerText=aiDb.fail[Math.floor(Math.random()*aiDb.fail.length)];
                 ui.gameOverMenu.classList.remove('hidden');
-                
-                // Reset UI Leaderboard
                 ui.submitScoreArea.style.display = 'flex';
                 ui.submitScoreBtn.disabled = false;
                 ui.submitScoreBtn.innerText = "ENVIAR A GLOBAL";
